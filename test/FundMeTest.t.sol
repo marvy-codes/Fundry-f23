@@ -11,9 +11,14 @@ contract FundMeTest is Test {
 
     FundMe fundMe;
 
+    address USER = makeAddr("User");
+    uint256 constant SEND_VALUE = 0.1 ether; // 10000000000000000
+    uint256 constant STARTING_BALANCE = 10 ether;
+
     function setUp() external {
         DeployFundMe deployFundMe = new DeployFundMe();
         fundMe = deployFundMe.run();
+        vm.deal(USER, STARTING_BALANCE);
 
     }
 
@@ -22,7 +27,7 @@ contract FundMeTest is Test {
         assertEq(fundMe.MINIMUM_USD(), 5e18);
     }
     function testOwnerIsMsgSender() public view {
-        assertEq(fundMe.i_owner(), address(msg.sender));
+        assertEq(fundMe.getOwner(), address(msg.sender));
     }
 
     function testFundFailsWithoutEnoughETH() public {
@@ -30,6 +35,24 @@ contract FundMeTest is Test {
        fundMe.fund();
     }
     function testFundUpdatesFundedDataStructure() public {
-         fundMe.fund{value: 10e18}();
+        vm.prank(USER);
+         fundMe.fund{value: SEND_VALUE}();
+         uint256 amountFunded = fundMe.getAddressToAmountFunded(USER);
+         assertEq(amountFunded, SEND_VALUE);
+    }
+    function testAddsFundersToArrayOfFunders() public {
+        vm.prank(USER);
+         fundMe.fund{value: SEND_VALUE}();
+         address funders = fundMe.getFunder(0);
+         assertEq(funders, USER);
+    }
+
+    function testOnlyOwnerCanWithdraw() public {
+        vm.prank(USER);
+        fundMe.fund{value: SEND_VALUE}();
+        vm.expectRevert();
+        vm.prank(USER);
+        fundMe.withdraw();
+
     }
 }
