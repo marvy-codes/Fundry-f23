@@ -25,4 +25,11 @@ contract FundMeTest is Test {
         assertEq(fundMe.i_owner(), address(msg.sender));
     }
 
+    function testFundFailsWithoutEnoughETH() public {
+        vm.expectRevert();
+       fundMe.fund();
+    }
+    function testFundUpdatesFundedDataStructure() public {
+         fundMe.fund{value: 10e18}();
+    }
 }
