@@ -8,15 +8,17 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 
 
 contract DeployFundMe is Script {
-    function run() external returns (FundMe){
-
-        // Not a "real" tx Before Broadcast
-        HelperConfig helperConfig = new HelperConfig();
-        (address ethUsdPriceFeed) = helperConfig.activeNetworkConfig();
+    function deployFundMe() public returns (FundMe, HelperConfig) {
+        HelperConfig helperConfig = new HelperConfig(); // This comes with our mocks!
+        address priceFeed = helperConfig.getConfigByChainId(block.chainid).priceFeed;
 
         vm.startBroadcast();
-        FundMe fundMe = new FundMe(ethUsdPriceFeed);
+        FundMe fundMe = new FundMe(priceFeed);
         vm.stopBroadcast();
-        return fundMe;
+        return (fundMe, helperConfig);
+    }
+
+    function run() external returns (FundMe, HelperConfig) {
+        return deployFundMe();
     }
 }
